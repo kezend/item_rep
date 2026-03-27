@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typography Scanner Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  </head>
+  <body>
+    <div class="editor-shell">
+      <aside class="panel">
+        <div class="panel__header">
+          <p class="eyebrow">Three.js Typography Tool</p>
+          <h1>Scanner Type Lab</h1>
+          <p class="panel__copy">
+            Stable 3D typography system for editorial and fashion visuals. Build one object first,
+            then expand into a field of variations.
+          </p>
+        </div>
+
+        <div class="panel__stack">
+          <section class="group">
+            <h2>Step 1. Type</h2>
+            <label class="field field--textarea">
+              <span>Text</span>
+              <textarea id="text-input" rows="3" spellcheck="false">TEST</textarea>
+            </label>
+
+            <label class="field">
+              <span>Font</span>
+              <select id="font-select">
+                <option value="Space Grotesk">Space Grotesk</option>
+                <option value="Syne">Syne</option>
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Cormorant Garamond">Cormorant Garamond</option>
+                <option value="Archivo Black">Archivo Black</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Upload Font</span>
+              <input id="font-upload" type="file" accept=".ttf,.otf,.woff,.woff2" />
+            </label>
+
+            <label class="field">
+              <span>Size <output data-output="font-size"></output></span>
+              <input id="font-size" type="range" min="120" max="420" step="1" value="250" />
+            </label>
+
+            <label class="field">
+              <span>Tracking <output data-output="tracking"></output></span>
+              <input id="tracking" type="range" min="-18" max="48" step="1" value="8" />
+            </label>
+
+            <label class="field">
+              <span>Line Height <output data-output="line-height"></output></span>
+              <input id="line-height" type="range" min="0.8" max="1.8" step="0.01" value="1" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 2. Render</h2>
+            <div class="toggle-group" id="render-mode-toggle">
+              <button type="button" data-render-mode="outline" class="is-active">Outline</button>
+              <button type="button" data-render-mode="mesh">Mesh</button>
+              <button type="button" data-render-mode="points">Point Cloud</button>
+            </div>
+
+            <label class="field">
+              <span>Stroke Thickness <output data-output="stroke-width"></output></span>
+              <input id="stroke-width" type="range" min="1" max="12" step="0.1" value="2.4" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 3. Glow</h2>
+            <label class="field field--inline">
+              <span>Glow</span>
+              <input id="glow-enabled" type="checkbox" checked />
+            </label>
+
+            <label class="field">
+              <span>Color</span>
+              <input id="glow-color" type="color" value="#00ff66" />
+            </label>
+
+            <div class="preset-row" id="color-presets">
+              <button type="button" data-color="#00ff66">Neon</button>
+              <button type="button" data-color="#ffffff">White</button>
+              <button type="button" data-color="#ffd9ec">Pastel</button>
+            </div>
+
+            <label class="field">
+              <span>Intensity <output data-output="glow-intensity"></output></span>
+              <input id="glow-intensity" type="range" min="0" max="3" step="0.01" value="1.15" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 4. Distort</h2>
+            <label class="field">
+              <span>Bend <output data-output="bend"></output></span>
+              <input id="bend" type="range" min="0" max="1" step="0.01" value="0.16" />
+            </label>
+
+            <label class="field">
+              <span>Twist <output data-output="twist"></output></span>
+              <input id="twist" type="range" min="0" max="1" step="0.01" value="0.18" />
+            </label>
+
+            <label class="field">
+              <span>Wave <output data-output="wave"></output></span>
+              <input id="wave" type="range" min="0" max="1" step="0.01" value="0.22" />
+            </label>
+
+            <label class="field">
+              <span>Noise <output data-output="noise"></output></span>
+              <input id="noise" type="range" min="0" max="1" step="0.01" value="0.14" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 5. Variations</h2>
+            <label class="field field--inline">
+              <span>Grid Mode</span>
+              <input id="grid-enabled" type="checkbox" />
+            </label>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Rows <output data-output="grid-rows"></output></span>
+                <input id="grid-rows" type="range" min="1" max="5" step="1" value="4" />
+              </label>
+
+              <label class="field">
+                <span>Cols <output data-output="grid-cols"></output></span>
+                <input id="grid-cols" type="range" min="1" max="5" step="1" value="4" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Seed</span>
+              <input id="seed-input" type="text" value="2026" />
+            </label>
+
+            <label class="field">
+              <span>Variation Intensity <output data-output="variation-intensity"></output></span>
+              <input id="variation-intensity" type="range" min="0" max="1.5" step="0.01" value="0.82" />
+            </label>
+
+            <div class="toggle-group toggle-group--dual" id="background-mode-toggle">
+              <button type="button" data-background-mode="single" class="is-active">Single Background</button>
+              <button type="button" data-background-mode="blocks">Color Blocks</button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h2>Step 6. Camera</h2>
+            <div class="toggle-group" id="camera-preset-toggle">
+              <button type="button" data-camera="front">Front</button>
+              <button type="button" data-camera="perspective" class="is-active">Perspective</button>
+              <button type="button" data-camera="top">Top</button>
+              <button type="button" data-camera="editorial">Editorial</button>
+            </div>
+
+            <label class="field">
+              <span>FOV <output data-output="camera-fov"></output></span>
+              <input id="camera-fov" type="range" min="20" max="80" step="1" value="36" />
+            </label>
+
+            <label class="field">
+              <span>Distance <output data-output="camera-distance"></output></span>
+              <input id="camera-distance" type="range" min="6" max="14" step="0.1" value="8.6" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Animation</h2>
+            <label class="field">
+              <span>Preset</span>
+              <select id="animation-preset">
+                <option value="slow">Slow Rotate</option>
+                <option value="scan">Scan Reveal</option>
+                <option value="glitch">Glitch</option>
+                <option value="dissolve">Dissolve</option>
+                <option value="pulse">Pulse</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 8. Export</h2>
+            <div class="export-grid">
+              <button type="button" data-export="png">PNG</button>
+              <button type="button" data-export="jpg">JPG</button>
+              <button type="button" data-export="gif">GIF</button>
+              <button type="button" data-export="svg">SVG</button>
+              <button type="button" data-export="gltf">GLTF</button>
+              <button type="button" data-export="obj">OBJ</button>
+            </div>
+            <p class="status" id="status-line">Ready.</p>
+          </section>
+        </div>
+      </aside>
+
+      <main class="stage-shell">
+        <div class="stage-meta">
+          <p>Drag to orbit</p>
+          <p>Scroll to zoom</p>
+          <p>Single object first, then switch to grid mode</p>
+        </div>
+        <div class="stage" id="stage">
+          <canvas id="scene-canvas" aria-label="3D typography stage"></canvas>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

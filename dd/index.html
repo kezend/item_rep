@@ -1,0 +1,2410 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typography Scanner Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  </head>
+  <body>
+    <div class="editor-shell">
+      <aside class="panel">
+        <div class="panel__header">
+          <p class="eyebrow">Three.js Typography Tool</p>
+          <h1>Scanner Type Lab</h1>
+          <p class="panel__copy">
+            Stable 3D typography system for editorial and fashion visuals. Build one object first,
+            then expand into a field of variations.
+          </p>
+        </div>
+
+        <div class="toggle-group panel-tabs" id="panel-tab-toggle">
+          <button type="button" data-panel-tab="system" class="is-active">System</button>
+          <button type="button" data-panel-tab="deform">Letter Deform</button>
+          <button type="button" data-panel-tab="editorial">Editorial</button>
+          <button type="button" data-panel-tab="brand">Brand Mode</button>
+          <button type="button" data-panel-tab="cinematic">Cinematic</button>
+          <button type="button" data-panel-tab="animation">Animation</button>
+          <button type="button" data-panel-tab="presets">Presets</button>
+          <button type="button" data-panel-tab="hand">Hand Control</button>
+        </div>
+
+        <div class="panel-pane is-active" data-panel-pane="system">
+        <div class="panel__stack">
+          <section class="group">
+            <h2>Step 1. Type</h2>
+            <label class="field field--textarea">
+              <span>Text</span>
+              <textarea id="text-input" rows="3" spellcheck="false">TEST</textarea>
+            </label>
+
+            <label class="field">
+              <span>Font</span>
+              <select id="font-select">
+                <option value="Space Grotesk">Space Grotesk</option>
+                <option value="Syne">Syne</option>
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Cormorant Garamond">Cormorant Garamond</option>
+                <option value="Archivo Black">Archivo Black</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Upload Font</span>
+              <input id="font-upload" type="file" accept=".ttf,.otf,.woff,.woff2" />
+            </label>
+
+            <label class="field">
+              <span>Size <output data-output="font-size"></output></span>
+              <input id="font-size" type="range" min="120" max="420" step="1" value="250" />
+            </label>
+
+            <label class="field">
+              <span>Tracking <output data-output="tracking"></output></span>
+              <input id="tracking" type="range" min="-18" max="200" step="1" value="8" />
+            </label>
+
+            <label class="field">
+              <span>Line Height <output data-output="line-height"></output></span>
+              <input id="line-height" type="range" min="0.8" max="1.8" step="0.01" value="1" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 2. Render</h2>
+            <div class="toggle-group" id="render-mode-toggle">
+              <button type="button" data-render-mode="outline">Outline</button>
+              <button type="button" data-render-mode="mesh">Mesh</button>
+              <button type="button" data-render-mode="points" class="is-active">Point Cloud</button>
+              <button type="button" data-render-mode="hybrid">Hybrid</button>
+            </div>
+
+            <label class="field">
+              <span>Stroke Thickness <output data-output="stroke-width"></output></span>
+              <input id="stroke-width" type="range" min="1" max="12" step="0.1" value="2.4" />
+            </label>
+
+            <label class="field">
+              <span>Point Size <output data-output="point-size"></output></span>
+              <input id="point-size" type="range" min="0.2" max="6" step="0.01" value="1" />
+            </label>
+
+            <label class="field">
+              <span>Point Opacity <output data-output="point-opacity"></output></span>
+              <input id="point-opacity" type="range" min="0" max="1" step="0.01" value="0.9" />
+            </label>
+
+            <label class="field">
+              <span>Point Color Mode</span>
+              <select id="point-color-mode">
+                <option value="solid">Solid</option>
+                <option value="gradient">Gradient</option>
+                <option value="random">Random</option>
+              </select>
+            </label>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Color A</span>
+                <input id="point-color-a" type="color" value="#ffffff" />
+              </label>
+
+              <label class="field">
+                <span>Color B</span>
+                <input id="point-color-b" type="color" value="#ffffff" />
+              </label>
+            </div>
+          </section>
+
+          <section class="group">
+            <h2>Step 3. Glow</h2>
+            <label class="field field--inline">
+              <span>Glow</span>
+              <input id="glow-enabled" type="checkbox" checked />
+            </label>
+
+            <label class="field field--inline">
+              <span>Glow White Points Only</span>
+              <input id="glow-base-points-only" type="checkbox" checked />
+            </label>
+
+            <label class="field">
+              <span>Color</span>
+              <input id="glow-color" type="color" value="#ffffff" />
+            </label>
+
+            <div class="preset-row" id="color-presets">
+              <button type="button" data-color="#00ff66">Neon</button>
+              <button type="button" data-color="#ffffff">White</button>
+              <button type="button" data-color="#ffd9ec">Pastel</button>
+            </div>
+
+            <label class="field">
+              <span>Intensity <output data-output="glow-intensity"></output></span>
+              <input id="glow-intensity" type="range" min="0" max="3" step="0.01" value="1.15" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Background</h2>
+            <label class="field">
+              <span>Background Color</span>
+              <input id="background-color" type="color" value="#050505" />
+            </label>
+
+            <label class="field field--inline">
+              <span>Transparent Background</span>
+              <input id="transparent-background" type="checkbox" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 4. Distort</h2>
+            <label class="field">
+              <span>Bend <output data-output="bend"></output></span>
+              <input id="bend" type="range" min="0" max="1" step="0.01" value="0.16" />
+            </label>
+
+            <label class="field">
+              <span>Twist <output data-output="twist"></output></span>
+              <input id="twist" type="range" min="0" max="1" step="0.01" value="0.18" />
+            </label>
+
+            <label class="field">
+              <span>Wave <output data-output="wave"></output></span>
+              <input id="wave" type="range" min="0" max="1" step="0.01" value="0.22" />
+            </label>
+
+            <label class="field">
+              <span>Noise <output data-output="noise"></output></span>
+              <input id="noise" type="range" min="0" max="1" step="0.01" value="0.14" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 5. Variations</h2>
+            <label class="field field--inline">
+              <span>Grid Mode</span>
+              <input id="grid-enabled" type="checkbox" />
+            </label>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Rows <output data-output="grid-rows"></output></span>
+                <input id="grid-rows" type="range" min="1" max="5" step="1" value="4" />
+              </label>
+
+              <label class="field">
+                <span>Cols <output data-output="grid-cols"></output></span>
+                <input id="grid-cols" type="range" min="1" max="5" step="1" value="4" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Seed</span>
+              <input id="seed-input" type="text" value="2026" />
+            </label>
+
+            <label class="field">
+              <span>Variation Intensity <output data-output="variation-intensity"></output></span>
+              <input id="variation-intensity" type="range" min="0" max="1.5" step="0.01" value="0.82" />
+            </label>
+
+            <div class="toggle-group toggle-group--dual" id="background-mode-toggle">
+              <button type="button" data-background-mode="single" class="is-active">Single Background</button>
+              <button type="button" data-background-mode="blocks">Color Blocks</button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h2>Step X. Axis System</h2>
+            <label class="field field--inline">
+              <span>Axis Step</span>
+              <input id="axis-step-enabled" type="checkbox" />
+            </label>
+
+            <label class="field field--inline">
+              <span>Axis Guides</span>
+              <input id="axis-guides-enabled" type="checkbox" checked />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Brand Points</h2>
+            <label class="field">
+              <span>Upload Images</span>
+              <input id="point-image-upload" type="file" accept="image/*" multiple />
+            </label>
+
+            <label class="field">
+              <span>Content Texts</span>
+              <textarea id="point-text-input" rows="3" spellcheck="false">ATLAS, PARIS, AW26, SIGNAL, BRAND, EDITION</textarea>
+            </label>
+
+            <label class="field">
+              <span>Content Text Font</span>
+              <select id="point-text-font">
+                <option value="Space Grotesk">Space Grotesk</option>
+                <option value="Syne">Syne</option>
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Cormorant Garamond">Cormorant Garamond</option>
+                <option value="Archivo Black">Archivo Black</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Upload Content Text Font</span>
+              <input id="point-text-font-upload" type="file" accept=".ttf,.otf,.woff,.woff2" />
+            </label>
+
+            <label class="field field--inline">
+              <span>Uppercase Text</span>
+              <input id="point-text-uppercase" type="checkbox" checked />
+            </label>
+
+            <label class="field field--inline">
+              <span>Text Background</span>
+              <input id="point-text-background" type="checkbox" checked />
+            </label>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Text Color</span>
+                <input id="point-text-color" type="color" value="#050505" />
+              </label>
+
+              <label class="field">
+                <span>Background Color</span>
+                <input id="point-text-background-color" type="color" value="#ffffff" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Content Density <output data-output="content-density"></output></span>
+              <input id="content-density" type="range" min="0" max="1" step="0.01" value="0.28" />
+            </label>
+
+            <label class="field">
+              <span>Fill All Points <output data-output="content-fill-points"></output></span>
+              <input id="content-fill-points" type="range" min="0" max="1" step="0.01" value="0" />
+            </label>
+
+            <label class="field">
+              <span>Hover Scale <output data-output="content-hover-scale"></output></span>
+              <input id="content-hover-scale" type="range" min="32" max="15000" step="1" value="220" />
+            </label>
+
+            <label class="field">
+              <span>Image % <output data-output="image-ratio"></output></span>
+              <input id="image-ratio" type="range" min="0" max="100" step="1" value="55" />
+            </label>
+
+            <label class="field">
+              <span>Text % <output data-output="text-ratio"></output></span>
+              <input id="text-ratio" type="range" min="0" max="100" step="1" value="30" />
+            </label>
+
+            <label class="field">
+              <span>Empty % <output data-output="empty-ratio"></output></span>
+              <input id="empty-ratio" type="range" min="0" max="100" step="1" value="15" />
+            </label>
+
+            <label class="field">
+              <span>Composition</span>
+              <select id="content-layout-mode">
+                <option value="field">Field</option>
+                <option value="grid">Grid</option>
+                <option value="perspective">Perspective</option>
+                <option value="arc">Curved</option>
+                <option value="constellation">Constellation Field</option>
+                <option value="perspective-wall">Perspective Wall</option>
+                <option value="radial">Radial System</option>
+                <option value="flow-field">Flow Field</option>
+                <option value="stacked-planes">Stacked Planes</option>
+                <option value="grid-break">Grid Break</option>
+                <option value="type-dominance">Type Dominance</option>
+                <option value="image-dominance">Image Dominance</option>
+                <option value="cluster-blobs">Cluster Blobs</option>
+                <option value="scan-lines">Scan Lines</option>
+                <option value="axis">Axis System</option>
+                <option value="tear">Tear / Break</option>
+                <option value="funnel">Funnel</option>
+                <option value="freeze">Freeze Frame</option>
+                <option value="mutation">Mutation</option>
+                <option value="focus">Focus</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Media Space Preset</span>
+              <select id="media-space-preset">
+                <option value="depth-field">Depth Field</option>
+                <option value="tunnel">Tunnel</option>
+                <option value="sphere-orbit">Sphere / Orbit</option>
+                <option value="walls">Walls</option>
+                <option value="stacked-cards">Stacked Cards</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Expansion Randomness <output data-output="expansion-randomness"></output></span>
+              <input id="expansion-randomness" type="range" min="0" max="1" step="0.01" value="0" />
+            </label>
+
+            <label class="field">
+              <span>Hover Proximity <output data-output="hover-proximity-strength"></output></span>
+              <input id="hover-proximity-strength" type="range" min="0" max="2" step="0.01" value="0.75" />
+            </label>
+
+            <label class="field">
+              <span>Cinematic Depth Speed <output data-output="cinematic-depth-speed"></output></span>
+              <input id="cinematic-depth-speed" type="range" min="0" max="2" step="0.01" value="0.6" />
+            </label>
+
+            <label class="field">
+              <span>Cinematic Direction</span>
+              <select id="cinematic-direction">
+                <option value="forward">Forward</option>
+                <option value="backward">Backward</option>
+              </select>
+            </label>
+
+            <label class="field field--inline">
+              <span>Content Only</span>
+              <input id="content-only-mode" type="checkbox" />
+            </label>
+
+            <label class="field">
+              <span>Content Only Type</span>
+              <select id="content-only-type">
+                <option value="mixed">Mixed</option>
+                <option value="image">Images Only</option>
+                <option value="text">Text Only</option>
+              </select>
+            </label>
+
+            <div class="toggle-group" id="interaction-mode-toggle">
+              <button type="button" data-interaction-mode="none" class="is-active">None</button>
+              <button type="button" data-interaction-mode="activation">Activation</button>
+              <button type="button" data-interaction-mode="scan">Scan</button>
+              <button type="button" data-interaction-mode="connection">Connection</button>
+              <button type="button" data-interaction-mode="chaos">Chaos</button>
+              <button type="button" data-interaction-mode="cluster">Cluster</button>
+            </div>
+
+            <div class="toggle-group" id="step-mode-toggle">
+              <button type="button" data-step-mode="none" class="is-active">No Step</button>
+              <button type="button" data-step-mode="force-field">Force Field</button>
+              <button type="button" data-step-mode="relation">Relation</button>
+              <button type="button" data-step-mode="curation">Curation</button>
+              <button type="button" data-step-mode="snapshot">Snapshot</button>
+              <button type="button" data-step-mode="camera-drama">Camera Drama</button>
+              <button type="button" data-step-mode="filter">Filter</button>
+              <button type="button" data-step-mode="material-state">Material State</button>
+              <button type="button" data-step-mode="boundary">Boundary</button>
+              <button type="button" data-step-mode="trail">Trail</button>
+              <button type="button" data-step-mode="field-shape">Field Shape</button>
+              <button type="button" data-step-mode="media-space">Media Space</button>
+              <button type="button" data-step-mode="cinematic-export">Cinematic Export</button>
+              <button type="button" data-step-mode="direct-manipulation">Direct Manip</button>
+              <button type="button" data-step-mode="axis-visualization">Axis Viz</button>
+            </div>
+
+            <label class="field">
+              <span>Filter</span>
+              <select id="filter-kind">
+                <option value="all">All</option>
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+                <option value="category-0">Category 0</option>
+                <option value="category-1">Category 1</option>
+                <option value="category-2">Category 2</option>
+                <option value="category-3">Category 3</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Boundary</span>
+              <select id="boundary-shape">
+                <option value="box">Box</option>
+                <option value="sphere">Sphere</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Field Shape</span>
+              <select id="field-shape">
+                <option value="plane">Plane</option>
+                <option value="sphere">Sphere</option>
+                <option value="spiral">Spiral</option>
+                <option value="ribbon">Ribbon</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Trail Length <output data-output="trail-length"></output></span>
+              <input id="trail-length" type="range" min="3" max="14" step="1" value="7" />
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 6. Camera</h2>
+            <div class="toggle-group" id="camera-preset-toggle">
+              <button type="button" data-camera="front">Front</button>
+              <button type="button" data-camera="perspective" class="is-active">Perspective</button>
+              <button type="button" data-camera="top">Top</button>
+              <button type="button" data-camera="editorial">Editorial</button>
+            </div>
+
+            <label class="field">
+              <span>FOV <output data-output="camera-fov"></output></span>
+              <input id="camera-fov" type="range" min="20" max="80" step="1" value="36" />
+            </label>
+
+            <label class="field">
+              <span>Distance <output data-output="camera-distance"></output></span>
+              <input id="camera-distance" type="range" min="1" max="48" step="0.1" value="8.6" />
+            </label>
+
+            <div class="preset-row">
+              <button type="button" id="reset-camera-button">Reset Camera</button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h2>Animation</h2>
+            <label class="field">
+              <span>Preset</span>
+              <select id="animation-preset">
+                <option value="slow">Slow Rotate</option>
+                <option value="scan">Scan Reveal</option>
+                <option value="glitch">Glitch</option>
+                <option value="dissolve">Dissolve</option>
+                <option value="pulse">Pulse</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>Step 8. Export</h2>
+            <div class="two-col">
+              <label class="field">
+                <span>Format Ratio</span>
+                <select id="export-ratio">
+                  <option value="current">Current</option>
+                  <option value="1:1">1:1</option>
+                  <option value="4:5">4:5</option>
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Base Size</span>
+                <select id="export-size">
+                  <option value="1080" selected>1080</option>
+                  <option value="1350">1350</option>
+                  <option value="1920">1920</option>
+                  <option value="2048">2048</option>
+                  <option value="3840">3840 (4K)</option>
+                  <option value="7680">7680 (8K)</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Frames <output data-output="export-frames"></output></span>
+                <input id="export-frames" type="range" min="12" max="180" step="1" value="48" />
+              </label>
+
+              <label class="field">
+                <span>Duration <output data-output="export-duration"></output></span>
+                <input id="export-duration" type="range" min="1" max="12" step="0.5" value="4" />
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label class="field">
+                <span>Quality <output data-output="export-quality"></output></span>
+                <input id="export-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" />
+              </label>
+
+              <label class="field">
+                <span>FPS <output data-output="export-fps"></output></span>
+                <input id="export-fps" type="range" min="8" max="60" step="1" value="24" />
+              </label>
+            </div>
+
+            <div class="export-grid">
+              <button type="button" data-export="png">PNG</button>
+              <button type="button" data-export="jpg">JPG</button>
+              <button type="button" data-export="gif">GIF</button>
+              <button type="button" data-export="mp4">MP4</button>
+              <button type="button" data-export="svg">SVG</button>
+              <button type="button" data-export="gltf">GLTF</button>
+              <button type="button" data-export="obj">OBJ</button>
+            </div>
+            <p class="status" id="status-line">Ready.</p>
+          </section>
+
+          <section class="group">
+            <h2>Editorial Overlay</h2>
+            <label class="field field--inline">
+              <span>Show Typography Overlay</span>
+              <input id="system-editorial-overlay-enabled" type="checkbox" />
+            </label>
+
+            <div class="export-grid">
+              <button type="button" id="system-editorial-load">Load In Editorial</button>
+              <button type="button" id="system-editorial-remove">Remove Overlay</button>
+            </div>
+
+            <p class="status" id="system-editorial-status">No editorial overlay saved for System.</p>
+          </section>
+
+          <section class="group">
+            <h2>Saved Compositions</h2>
+            <div class="two-col">
+              <label class="field">
+                <span>Preset Name</span>
+                <input id="saved-composition-name" type="text" value="My Composition" />
+              </label>
+
+              <div class="field">
+                <span>Actions</span>
+                <div class="preset-row">
+                  <button type="button" id="save-composition-button">Save Current</button>
+                  <button type="button" id="save-preset-button">Save as Preset</button>
+                  <button type="button" id="clear-session-button">Clear Auto Save</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="saved-list" id="saved-composition-list"></div>
+          </section>
+        </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="deform">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Letter Control</h2>
+              <p class="status" id="selected-letter-status">No letter selected. Open this tab, click a letter in the viewport, then deform it here.</p>
+
+              <label class="field">
+                <span>Move X <output data-output="letter-move-x"></output></span>
+                <input id="letter-move-x" type="range" min="-4" max="4" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Move Y <output data-output="letter-move-y"></output></span>
+                <input id="letter-move-y" type="range" min="-4" max="4" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Move Z <output data-output="letter-move-z"></output></span>
+                <input id="letter-move-z" type="range" min="-4" max="4" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Scale X <output data-output="letter-scale-x"></output></span>
+                <input id="letter-scale-x" type="range" min="0.3" max="3" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Scale Y <output data-output="letter-scale-y"></output></span>
+                <input id="letter-scale-y" type="range" min="0.3" max="3" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Scale Z <output data-output="letter-scale-z"></output></span>
+                <input id="letter-scale-z" type="range" min="0.3" max="3" step="0.01" value="1" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Letter Deformation</h2>
+              <label class="field">
+                <span>Bend X <output data-output="letter-bend-x"></output></span>
+                <input id="letter-bend-x" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Bend Y <output data-output="letter-bend-y"></output></span>
+                <input id="letter-bend-y" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Bend Z <output data-output="letter-bend-z"></output></span>
+                <input id="letter-bend-z" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Twist X <output data-output="letter-twist-x"></output></span>
+                <input id="letter-twist-x" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Twist Y <output data-output="letter-twist-y"></output></span>
+                <input id="letter-twist-y" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Twist Z <output data-output="letter-twist-z"></output></span>
+                <input id="letter-twist-z" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Noise <output data-output="letter-noise"></output></span>
+                <input id="letter-noise" type="range" min="0" max="1.5" step="0.01" value="0" />
+              </label>
+
+              <div class="export-grid">
+                <button type="button" id="letter-reset-selected">Reset Selected</button>
+                <button type="button" id="letter-reset-all">Reset All</button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="hand">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Hand Control</h2>
+              <label class="field">
+                <span>Hand Mode</span>
+                <select id="hand-mode">
+                  <option value="system">System Control</option>
+                  <option value="brand">Brand Control</option>
+                </select>
+              </label>
+              <p class="status" id="hand-control-status">Open this tab to activate webcam gesture control.</p>
+              <div class="hand-preview">
+                <video id="hand-video" playsinline muted></video>
+                <canvas id="hand-overlay"></canvas>
+              </div>
+              <p class="status">
+                Hand 1: pinch to compress or expand. Hand 2: move to rotate in space.
+              </p>
+              <div class="two-col">
+                <label class="field">
+                  <span>Format Ratio</span>
+                  <select id="hand-export-ratio">
+                    <option value="current">Current</option>
+                    <option value="1:1">1:1</option>
+                    <option value="4:5">4:5</option>
+                    <option value="16:9">16:9</option>
+                    <option value="9:16">9:16</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Base Size</span>
+                  <select id="hand-export-size">
+                    <option value="1080" selected>1080</option>
+                    <option value="1350">1350</option>
+                    <option value="1920">1920</option>
+                    <option value="2048">2048</option>
+                    <option value="3840">3840 (4K)</option>
+                    <option value="7680">7680 (8K)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Frames <output data-output="export-frames"></output></span>
+                  <input id="hand-export-frames" type="range" min="12" max="180" step="1" value="48" />
+                </label>
+
+                <label class="field">
+                  <span>Duration <output data-output="export-duration"></output></span>
+                  <input id="hand-export-duration" type="range" min="1" max="12" step="0.5" value="4" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Quality <output data-output="export-quality"></output></span>
+                  <input id="hand-export-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" />
+                </label>
+
+                <label class="field">
+                  <span>FPS <output data-output="export-fps"></output></span>
+                  <input id="hand-export-fps" type="range" min="8" max="60" step="1" value="24" />
+                </label>
+              </div>
+              <div class="export-grid">
+                <button type="button" data-export="gif">GIF</button>
+                <button type="button" data-export="mp4">MP4</button>
+              </div>
+              <p class="status" id="hand-export-status">Ready for GIF or MP4 export.</p>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="brand">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Режим Бренда</h2>
+              <p class="status" id="brand-status">
+                Один центральный бренд-объект и орбитальная система из точек, изображений и текста. Активируется только пока открыта эта вкладка.
+              </p>
+
+              <label class="field">
+                <span>Пресет композиции</span>
+                <select id="brand-preset">
+                  <option value="hero-orbit">Герой в Орбите</option>
+                  <option value="split-orbit">Разделённая Орбита</option>
+                  <option value="tunnel-brand">Тоннель</option>
+                  <option value="wall-brand">Медиа-Стены</option>
+                  <option value="cluster-brand">Кластеры</option>
+                  <option value="asymmetric-editorial">Асимметричная Редакционная</option>
+                  <option value="runway-brand">Подиум</option>
+                  <option value="explosion-focus">Взрыв от Центра</option>
+                  <option value="minimal-luxury">Минимальный Люкс</option>
+                  <option value="data-axis-brand">Оси Данных</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Главный контент</span>
+                <select id="brand-main-kind">
+                  <option value="auto">Авто</option>
+                  <option value="image">Изображение</option>
+                  <option value="text">Текст</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Главное изображение</span>
+                <input id="brand-main-image-upload" type="file" accept="image/*" />
+              </label>
+
+              <label class="field">
+                <span>Главный текст</span>
+                <textarea id="brand-main-text" rows="3" spellcheck="false"></textarea>
+              </label>
+
+              <label class="field">
+                <span>Изображения орбиты</span>
+                <input id="brand-orbit-image-upload" type="file" accept="image/*" multiple />
+              </label>
+
+              <label class="field">
+                <span>Тексты орбиты</span>
+                <textarea id="brand-orbit-texts" rows="4" spellcheck="false"></textarea>
+              </label>
+
+              <button type="button" class="button button--subtle" id="brand-save-preset">Save as Preset</button>
+            </section>
+
+            <section class="group">
+              <h2>Текст Бренда</h2>
+              <label class="field">
+                <span>Размер шрифта <output data-output="brand-text-font-size"></output></span>
+                <input id="brand-text-font-size" type="range" min="48" max="180" step="1" value="108" />
+              </label>
+
+              <label class="field">
+                <span>Выравнивание</span>
+                <select id="brand-text-align">
+                  <option value="center">По центру</option>
+                  <option value="left">Слева</option>
+                  <option value="right">Справа</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Цвет текста</span>
+                <input id="brand-text-color" type="color" value="#f5f2ed" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Герой</h2>
+              <label class="field">
+                <span>Масштаб героя <output data-output="brand-main-scale"></output></span>
+                <input id="brand-main-scale" type="range" min="-10" max="10" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Поворот по X <output data-output="brand-main-rotate-x"></output></span>
+                <input id="brand-main-rotate-x" type="range" min="-1.57" max="1.57" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Поворот по Y <output data-output="brand-main-rotate-y"></output></span>
+                <input id="brand-main-rotate-y" type="range" min="-1.57" max="1.57" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Поворот по Z <output data-output="brand-main-rotate-z"></output></span>
+                <input id="brand-main-rotate-z" type="range" min="-1.57" max="1.57" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Глубина героя <output data-output="brand-main-depth"></output></span>
+                <input id="brand-main-depth" type="range" min="-3" max="3" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Глубина активного бренда <output data-output="brand-active-depth-offset"></output></span>
+                <input id="brand-active-depth-offset" type="range" min="-1" max="1" step="0.01" value="0.35" />
+              </label>
+
+              <label class="field">
+                <span>Наклон героя <output data-output="brand-main-tilt"></output></span>
+                <input id="brand-main-tilt" type="range" min="-0.8" max="0.8" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Скос героя <output data-output="brand-hero-skew"></output></span>
+                <input id="brand-hero-skew" type="range" min="-0.8" max="0.8" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Прозрачность героя <output data-output="brand-hero-opacity"></output></span>
+                <input id="brand-hero-opacity" type="range" min="0" max="1" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Доминирование героя <output data-output="brand-hero-dominance"></output></span>
+                <input id="brand-hero-dominance" type="range" min="0.5" max="4" step="0.01" value="2.1" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Орбита</h2>
+
+              <label class="field">
+                <span>Скорость орбиты <output data-output="brand-orbit-speed"></output></span>
+                <input id="brand-orbit-speed" type="range" min="0" max="2" step="0.01" value="0.62" />
+              </label>
+
+              <label class="field">
+                <span>Радиус орбиты <output data-output="brand-orbit-radius"></output></span>
+                <input id="brand-orbit-radius" type="range" min="0.5" max="4" step="0.01" value="1.9" />
+              </label>
+
+              <label class="field">
+                <span>Кольца <output data-output="brand-number-of-rings"></output></span>
+                <input id="brand-number-of-rings" type="range" min="1" max="5" step="1" value="2" />
+              </label>
+
+              <label class="field">
+                <span>Шаг орбиты <output data-output="brand-orbit-spacing"></output></span>
+                <input id="brand-orbit-spacing" type="range" min="0" max="2.5" step="0.01" value="0.38" />
+              </label>
+
+              <label class="field">
+                <span>Случайность орбиты <output data-output="brand-orbit-randomness"></output></span>
+                <input id="brand-orbit-randomness" type="range" min="0" max="1" step="0.01" value="0.28" />
+              </label>
+
+              <label class="field">
+                <span>Дрожание орбиты <output data-output="brand-orbit-jitter"></output></span>
+                <input id="brand-orbit-jitter" type="range" min="0" max="1" step="0.01" value="0.12" />
+              </label>
+
+              <label class="field">
+                <span>Мин. масштаб орбиты <output data-output="brand-orbit-min-scale"></output></span>
+                <input id="brand-orbit-min-scale" type="range" min="0.5" max="3" step="0.01" value="0.82" />
+              </label>
+
+              <label class="field">
+                <span>Макс. масштаб орбиты <output data-output="brand-orbit-max-scale"></output></span>
+                <input id="brand-orbit-max-scale" type="range" min="0.2" max="10" step="0.01" value="1.08" />
+              </label>
+
+              <label class="field">
+                <span>Дистанция орбиты <output data-output="brand-orbit-distance"></output></span>
+                <input id="brand-orbit-distance" type="range" min="0.4" max="4.5" step="0.01" value="1.9" />
+              </label>
+
+              <label class="field">
+                <span>Разброс по глубине <output data-output="brand-orbit-depth-spread"></output></span>
+                <input id="brand-orbit-depth-spread" type="range" min="0" max="4" step="0.01" value="1.6" />
+              </label>
+
+              <label class="field">
+                <span>Cluster Strength <output data-output="brand-cluster-strength"></output></span>
+                <input id="brand-cluster-strength" type="range" min="0" max="1.5" step="0.01" value="0.4" />
+              </label>
+
+              <label class="field">
+                <span>Attraction To Hero <output data-output="brand-attraction-to-hero"></output></span>
+                <input id="brand-attraction-to-hero" type="range" min="0" max="2" step="0.01" value="0.65" />
+              </label>
+
+              <label class="field">
+                <span>Repulsion From Hero <output data-output="brand-repulsion-from-hero"></output></span>
+                <input id="brand-repulsion-from-hero" type="range" min="0" max="2" step="0.01" value="0.22" />
+              </label>
+
+              <label class="field field--inline">
+                <span>Случайный поворот</span>
+                <input id="brand-orbit-random-rotation" type="checkbox" checked />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Контент</h2>
+
+              <label class="field field--inline">
+                <span>Показывать точки</span>
+                <input id="brand-show-points" type="checkbox" checked />
+              </label>
+
+              <label class="field field--inline">
+                <span>Показывать изображения</span>
+                <input id="brand-show-images" type="checkbox" checked />
+              </label>
+
+              <label class="field field--inline">
+                <span>Показывать текст</span>
+                <input id="brand-show-text" type="checkbox" checked />
+              </label>
+
+              <label class="field">
+                <span>Количество точек <output data-output="brand-point-density"></output></span>
+                <input id="brand-point-density" type="range" min="0.05" max="1" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Размер точек <output data-output="brand-point-size"></output></span>
+                <input id="brand-point-size" type="range" min="0.2" max="6" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Прозрачность точек <output data-output="brand-point-opacity"></output></span>
+                <input id="brand-point-opacity" type="range" min="0" max="1" step="0.01" value="0.18" />
+              </label>
+
+              <label class="field">
+                <span>Режим цвета точек</span>
+                <select id="brand-point-color-mode">
+                  <option value="solid">Сплошной</option>
+                  <option value="gradient">Градиент</option>
+                  <option value="random">Случайный</option>
+                </select>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Цвет точек A</span>
+                  <input id="brand-point-color-a" type="color" value="#ffffff" />
+                </label>
+
+                <label class="field">
+                  <span>Цвет точек B</span>
+                  <input id="brand-point-color-b" type="color" value="#d9d9d9" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Заголовок</span>
+                <input id="brand-title-text" type="text" value="" />
+              </label>
+
+              <label class="field">
+                <span>Подзаголовок</span>
+                <input id="brand-subtitle-text" type="text" value="" />
+              </label>
+
+              <label class="field">
+                <span>Тег / метка</span>
+                <input id="brand-tag-text" type="text" value="" />
+              </label>
+
+              <label class="field">
+                <span>Фоновое слово</span>
+                <input id="brand-background-word" type="text" value="" />
+              </label>
+
+              <label class="field">
+                <span>Интерлиньяж текста <output data-output="brand-text-line-height"></output></span>
+                <input id="brand-text-line-height" type="range" min="0.7" max="1.6" step="0.01" value="0.92" />
+              </label>
+
+              <label class="field">
+                <span>Трекинг текста <output data-output="brand-text-letter-spacing"></output></span>
+                <input id="brand-text-letter-spacing" type="range" min="-8" max="40" step="1" value="4" />
+              </label>
+
+              <label class="field">
+                <span>Прозрачность текста <output data-output="brand-text-opacity"></output></span>
+                <input id="brand-text-opacity" type="range" min="0" max="1" step="0.01" value="0.92" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Иерархия</h2>
+
+              <label class="field">
+                <span>Акцент второстепенных <output data-output="brand-secondary-emphasis"></output></span>
+                <input id="brand-secondary-emphasis" type="range" min="0" max="2" step="0.01" value="0.9" />
+              </label>
+
+              <label class="field">
+                <span>Подавление фона <output data-output="brand-background-suppression"></output></span>
+                <input id="brand-background-suppression" type="range" min="0" max="1" step="0.01" value="0.28" />
+              </label>
+
+              <label class="field">
+                <span>Затухание прозрачности <output data-output="brand-opacity-falloff-depth"></output></span>
+                <input id="brand-opacity-falloff-depth" type="range" min="0" max="1" step="0.01" value="0.3" />
+              </label>
+
+              <label class="field">
+                <span>Затухание масштаба <output data-output="brand-scale-falloff-distance"></output></span>
+                <input id="brand-scale-falloff-distance" type="range" min="0" max="1" step="0.01" value="0.22" />
+              </label>
+
+              <label class="field">
+                <span>Затухание размытия <output data-output="brand-blur-falloff-depth"></output></span>
+                <input id="brand-blur-falloff-depth" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Переход</h2>
+
+              <label class="field">
+                <span>Стиль перехода</span>
+                <select id="brand-transition-style">
+                  <option value="slide">Сдвиг</option>
+                  <option value="dissolve">Растворение</option>
+                  <option value="zoom-through">Пролёт Сквозь</option>
+                  <option value="push-pull-depth">Сдвиг по Глубине</option>
+                  <option value="orbit-replace">Замена в Орбите</option>
+                  <option value="glitch-switch">Глитч</option>
+                  <option value="fade-through-points">Через Точки</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Длительность перехода <output data-output="brand-transition-duration"></output></span>
+                <input id="brand-transition-duration" type="range" min="0.2" max="2.5" step="0.01" value="0.9" />
+              </label>
+
+              <label class="field">
+                <span>Кривая перехода</span>
+                <select id="brand-transition-easing">
+                  <option value="ease-in-out">Плавно</option>
+                  <option value="linear">Линейно</option>
+                  <option value="ease-out">С замедлением</option>
+                </select>
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Камера</h2>
+
+              <label class="field">
+                <span>Ракурс бренда</span>
+                <select id="brand-camera-preset">
+                  <option value="medium">Средний</option>
+                  <option value="close-up">Крупный План</option>
+                  <option value="wide-orbit">Широкая Орбита</option>
+                  <option value="low-angle">Снизу</option>
+                  <option value="top-angle">Сверху</option>
+                  <option value="editorial-oblique">Редакционный Угол</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Плавный дрейф камеры <output data-output="brand-slow-camera-drift"></output></span>
+                <input id="brand-slow-camera-drift" type="range" min="0" max="1" step="0.01" value="0.18" />
+              </label>
+
+              <label class="field">
+                <span>Сила параллакса <output data-output="brand-parallax-strength"></output></span>
+                <input id="brand-parallax-strength" type="range" min="0" max="1.5" step="0.01" value="0.35" />
+              </label>
+
+              <div class="preset-row">
+                <button type="button" id="brand-reset-camera-button">Сбросить Камеру</button>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Вывод</h2>
+
+              <label class="field field--inline">
+                <span>Glow</span>
+                <input id="brand-glow-enabled" type="checkbox" checked />
+              </label>
+
+              <label class="field">
+                <span>Пресет формата</span>
+                <select id="brand-output-preset">
+                  <option value="poster">Постер</option>
+                  <option value="square-post">Квадратный Пост</option>
+                  <option value="story">Сторис</option>
+                  <option value="hero-banner">Баннер</option>
+                </select>
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Настроение</h2>
+
+              <label class="field">
+                <span>Пресет настроения</span>
+                <select id="brand-mood-preset">
+                  <option value="luxury">Люкс</option>
+                  <option value="chaos">Хаос</option>
+                  <option value="tech">Техно</option>
+                  <option value="campaign">Кампейн</option>
+                </select>
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Дополнительно</h2>
+
+              <label class="field">
+                <span>Сила ауры <output data-output="brand-aura-strength"></output></span>
+                <input id="brand-aura-strength" type="range" min="0" max="2" step="0.01" value="0.65" />
+              </label>
+
+              <label class="field">
+                <span>Радиус ауры <output data-output="brand-aura-radius"></output></span>
+                <input id="brand-aura-radius" type="range" min="0.2" max="4" step="0.01" value="1.15" />
+              </label>
+
+              <label class="field">
+                <span>Прозрачность ауры <output data-output="brand-aura-opacity"></output></span>
+                <input id="brand-aura-opacity" type="range" min="0" max="1" step="0.01" value="0.42" />
+              </label>
+
+              <label class="field">
+                <span>Длительность следа <output data-output="brand-memory-duration"></output></span>
+                <input id="brand-memory-duration" type="range" min="0.1" max="3" step="0.01" value="0.9" />
+              </label>
+
+              <label class="field">
+                <span>Прозрачность следа <output data-output="brand-memory-opacity"></output></span>
+                <input id="brand-memory-opacity" type="range" min="0" max="1" step="0.01" value="0.32" />
+              </label>
+
+              <label class="field">
+                <span>Смещение следа <output data-output="brand-memory-offset"></output></span>
+                <input id="brand-memory-offset" type="range" min="0" max="2" step="0.01" value="0.42" />
+              </label>
+
+              <label class="field">
+                <span>Вес бренда <output data-output="brand-weight"></output></span>
+                <input id="brand-weight" type="range" min="0.2" max="3" step="0.01" value="1" />
+              </label>
+
+              <label class="field field--inline">
+                <span>Двойной герой</span>
+                <input id="brand-dual-hero-enabled" type="checkbox" />
+              </label>
+
+              <label class="field">
+                <span>Дистанция между героями <output data-output="brand-dual-hero-distance"></output></span>
+                <input id="brand-dual-hero-distance" type="range" min="0.4" max="4" step="0.01" value="1.5" />
+              </label>
+
+              <label class="field">
+                <span>Баланс героев <output data-output="brand-dual-hero-balance"></output></span>
+                <input id="brand-dual-hero-balance" type="range" min="0" max="1" step="0.01" value="0.5" />
+              </label>
+
+              <div class="export-grid">
+                <button type="button" id="brand-clear-orbit">Очистить Орбиту</button>
+                <button type="button" id="brand-randomize-orbit">Рандомизировать Орбиту</button>
+                <button type="button" id="brand-reset-main">Сбросить Главный</button>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Экспорт</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Цвет фона</span>
+                  <input id="brand-background-color" type="color" value="#050505" />
+                </label>
+
+                <label class="field field--inline">
+                  <span>Прозрачный фон</span>
+                  <input id="brand-transparent-background" type="checkbox" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Соотношение сторон</span>
+                  <select id="brand-export-ratio">
+                    <option value="current">Current</option>
+                    <option value="1:1">1:1</option>
+                    <option value="4:5">4:5</option>
+                    <option value="16:9">16:9</option>
+                    <option value="9:16">9:16</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Базовый размер</span>
+                  <select id="brand-export-size">
+                    <option value="1080" selected>1080</option>
+                    <option value="1350">1350</option>
+                    <option value="1920">1920</option>
+                    <option value="2048">2048</option>
+                    <option value="3840">3840 (4K)</option>
+                    <option value="7680">7680 (8K)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Кадры <output data-output="brand-export-frames"></output></span>
+                  <input id="brand-export-frames" type="range" min="12" max="180" step="1" value="48" />
+                </label>
+
+                <label class="field">
+                  <span>Длительность <output data-output="brand-export-duration"></output></span>
+                  <input id="brand-export-duration" type="range" min="1" max="12" step="0.5" value="4" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Качество <output data-output="brand-export-quality"></output></span>
+                  <input id="brand-export-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" />
+                </label>
+
+                <label class="field">
+                  <span>FPS <output data-output="brand-export-fps"></output></span>
+                  <input id="brand-export-fps" type="range" min="8" max="60" step="1" value="24" />
+                </label>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" data-export="png">PNG</button>
+                <button type="button" data-export="jpg">JPG</button>
+                <button type="button" data-export="gif">GIF</button>
+                <button type="button" data-export="mp4">MP4</button>
+                <button type="button" data-export="svg">SVG</button>
+                <button type="button" data-export="gltf">GLTF</button>
+                <button type="button" data-export="obj">OBJ</button>
+              </div>
+              <p class="status">Использует тот же export pipeline, что и основная панель.</p>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="editorial">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Editorial Typography</h2>
+              <p class="status" id="editorial-status">
+                High-contrast editorial typography layout with draggable hero text, labels, metadata boxes, and media overlap.
+              </p>
+
+              <div class="toggle-group toggle-group--triple" id="editorial-context-toggle">
+                <button type="button" data-editorial-context="standalone" class="is-active">Standalone</button>
+                <button type="button" data-editorial-context="system">System</button>
+                <button type="button" data-editorial-context="brand">Brand</button>
+              </div>
+
+              <label class="field">
+                <span>Layout Preset</span>
+                <select id="editorial-layout-preset">
+                  <option value="hero-center">Hero Center</option>
+                  <option value="offset-hero">Offset Hero</option>
+                  <option value="frame-editorial">Frame Editorial</option>
+                  <option value="image-overlay">Image Overlay</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Template</span>
+                <select id="editorial-template-preset">
+                  <option value="luxury-campaign">Luxury Campaign</option>
+                  <option value="sale-poster">Sale Poster</option>
+                  <option value="gallery-announcement">Gallery Announcement</option>
+                  <option value="fashion-brand-card">Fashion Brand Card</option>
+                  <option value="minimalist-editorial">Minimalist Editorial</option>
+                </select>
+              </label>
+
+              <label class="field field--inline">
+                <span>Glow</span>
+                <input id="editorial-glow-enabled" type="checkbox" checked />
+              </label>
+
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-import-brand">Import Brand Setup</button>
+                <button type="button" class="button button--subtle" id="editorial-save-brand">Save For Brand Mode</button>
+                <button type="button" class="button button--subtle" id="editorial-save-system">Save For System</button>
+                <button type="button" class="button button--subtle" id="editorial-load-system">Load From System</button>
+                <button type="button" class="button button--subtle" id="editorial-save-preset">Save as Preset</button>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-add-hero">+ Hero</button>
+                <button type="button" class="button button--subtle" id="editorial-remove-hero">− Hero</button>
+                <button type="button" class="button button--subtle" id="editorial-toggle-hero" data-editorial-section="hero">▾ Hero</button>
+              </div>
+
+              <div data-editorial-section-content="hero">
+              <div class="editorial-block-list" id="editorial-hero-block-list"></div>
+              <label class="field" hidden>
+                <span>Hero Blocks (use --- between blocks)</span>
+                <textarea id="editorial-hero-text" rows="4" spellcheck="false"></textarea>
+              </label>
+
+              <label class="field">
+                <span>Hero Font</span>
+                <select id="editorial-hero-font">
+                  <option value="Cormorant Garamond">Cormorant Garamond</option>
+                  <option value="Bodoni Moda">Bodoni Moda</option>
+                  <option value="Playfair Display">Playfair Display</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Upload Hero Font</span>
+                <input id="editorial-hero-font-upload" type="file" accept=".ttf,.otf,.woff,.woff2" />
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Size <output data-output="editorial-hero-size"></output></span>
+                  <input id="editorial-hero-size" type="range" min="120" max="520" step="1" value="280" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Tracking <output data-output="editorial-hero-tracking"></output></span>
+                  <input id="editorial-hero-tracking" type="range" min="-20" max="40" step="1" value="-6" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Line Height <output data-output="editorial-hero-line-height"></output></span>
+                  <input id="editorial-hero-line-height" type="range" min="0.7" max="1.4" step="0.01" value="0.9" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Opacity <output data-output="editorial-hero-opacity"></output></span>
+                  <input id="editorial-hero-opacity" type="range" min="0" max="1" step="0.01" value="1" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Color</span>
+                  <input id="editorial-hero-color" type="color" value="#ffffff" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Layer</span>
+                  <select id="editorial-hero-layer">
+                    <option value="front">In Front of Image</option>
+                    <option value="behind-image">Behind Image</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Position X <output data-output="editorial-hero-x"></output></span>
+                  <input id="editorial-hero-x" type="range" min="-2" max="2" step="0.01" value="0" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Position Y <output data-output="editorial-hero-y"></output></span>
+                  <input id="editorial-hero-y" type="range" min="-2" max="2" step="0.01" value="0" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Hero Depth <output data-output="editorial-hero-z"></output></span>
+                <input id="editorial-hero-z" type="range" min="-2" max="2" step="0.01" value="0.32" />
+              </label>
+
+              <label class="field">
+                <span>Hero Max Width <output data-output="editorial-hero-max-width"></output></span>
+                <input id="editorial-hero-max-width" type="range" min="1.2" max="10" step="0.01" value="4.4" />
+              </label>
+
+              <label class="field field--inline">
+                <span>Hero Background</span>
+                <input id="editorial-hero-background" type="checkbox" />
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Background Opacity <output data-output="editorial-hero-bg-opacity"></output></span>
+                  <input id="editorial-hero-bg-opacity" type="range" min="0" max="1" step="0.01" value="0.2" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Background Color</span>
+                  <input id="editorial-hero-bg-color" type="color" value="#000000" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Padding X <output data-output="editorial-hero-padding-x"></output></span>
+                  <input id="editorial-hero-padding-x" type="range" min="0" max="220" step="1" value="40" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Padding Y <output data-output="editorial-hero-padding-y"></output></span>
+                  <input id="editorial-hero-padding-y" type="range" min="0" max="220" step="1" value="26" />
+                </label>
+              </div>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Top Labels</h2>
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-add-top-labels">+ Labels</button>
+                <button type="button" class="button button--subtle" id="editorial-remove-top-labels">− Labels</button>
+                <button type="button" class="button button--subtle" id="editorial-toggle-top-labels-2" data-editorial-section="top-labels">▾ Toggle</button>
+              </div>
+              <div data-editorial-section-content="top-labels">
+              <label class="field">
+                <span>Labels</span>
+                <textarea id="editorial-labels-text" rows="2" spellcheck="false"></textarea>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Label Size <output data-output="editorial-labels-size"></output></span>
+                  <input id="editorial-labels-size" type="range" min="12" max="56" step="1" value="24" />
+                </label>
+
+                <label class="field">
+                  <span>Label Tracking <output data-output="editorial-labels-tracking"></output></span>
+                  <input id="editorial-labels-tracking" type="range" min="0" max="40" step="1" value="14" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Label Spacing <output data-output="editorial-labels-spacing"></output></span>
+                  <input id="editorial-labels-spacing" type="range" min="0.1" max="2" step="0.01" value="0.75" />
+                </label>
+
+                <label class="field">
+                  <span>Alignment</span>
+                  <select id="editorial-labels-align">
+                    <option value="spread">Spread</option>
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Labels Depth <output data-output="editorial-labels-z"></output></span>
+                <input id="editorial-labels-z" type="range" min="-2" max="2" step="0.01" value="0" />
+              </label>
+
+              <label class="field">
+                <span>Labels Layer</span>
+                <select id="editorial-labels-layer">
+                  <option value="front">In Front of Image</option>
+                  <option value="behind-image">Behind Hero Image</option>
+                </select>
+              </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Text Blocks</h2>
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-add-info-block">+ Text Block</button>
+                <button type="button" class="button button--subtle" id="editorial-remove-info-block">− Text Block</button>
+                <button type="button" class="button button--subtle" id="editorial-toggle-info" data-editorial-section="info">▾ Toggle</button>
+              </div>
+              <div data-editorial-section-content="info">
+              <div class="editorial-block-list" id="editorial-info-block-list"></div>
+              <div class="two-col">
+                <label class="field">
+                  <span>Text Font</span>
+                  <select id="editorial-text-font">
+                    <option value="Cormorant Garamond">Cormorant Garamond</option>
+                    <option value="Bodoni Moda">Bodoni Moda</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                    <option value="IBM Plex Mono">IBM Plex Mono</option>
+                    <option value="Space Grotesk">Space Grotesk</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Upload Text Font</span>
+                  <input id="editorial-text-font-upload" type="file" accept=".ttf,.otf,.woff,.woff2" />
+                </label>
+              </div>
+
+              <label class="field" hidden>
+                <span>Text Blocks</span>
+                <textarea id="editorial-info-text" rows="5" spellcheck="false"></textarea>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Default Text Size <output data-output="editorial-info-font-size"></output></span>
+                  <input id="editorial-info-font-size" type="range" min="12" max="96" step="1" value="38" />
+                </label>
+
+                <label class="field">
+                  <span>Default Box Width <output data-output="editorial-info-width"></output></span>
+                  <input id="editorial-info-width" type="range" min="0.8" max="4" step="0.01" value="1.9" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Default Tracking <output data-output="editorial-info-tracking"></output></span>
+                  <input id="editorial-info-tracking" type="range" min="-20" max="60" step="1" value="0" />
+                </label>
+
+                <label class="field">
+                  <span>Default Line Height <output data-output="editorial-info-line-height"></output></span>
+                  <input id="editorial-info-line-height" type="range" min="0.7" max="2" step="0.01" value="1" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Default Box Height <output data-output="editorial-info-height"></output></span>
+                  <input id="editorial-info-height" type="range" min="0.4" max="2.4" step="0.01" value="0.92" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Default Padding <output data-output="editorial-info-padding"></output></span>
+                  <input id="editorial-info-padding" type="range" min="8" max="80" step="1" value="30" />
+                </label>
+
+                <label class="field">
+                  <span>Default Alignment</span>
+                  <select id="editorial-info-align">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Default Position X <output data-output="editorial-info-x"></output></span>
+                  <input id="editorial-info-x" type="range" min="-2.4" max="2.4" step="0.01" value="1.25" />
+                </label>
+
+                <label class="field">
+                  <span>Default Position Y <output data-output="editorial-info-y"></output></span>
+                  <input id="editorial-info-y" type="range" min="-2.4" max="2.4" step="0.01" value="-0.52" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Default Text Depth <output data-output="editorial-info-z"></output></span>
+                <input id="editorial-info-z" type="range" min="-2" max="2" step="0.01" value="0.42" />
+              </label>
+
+              <label class="field">
+                <span>Default Text Layer</span>
+                <select id="editorial-info-layer">
+                  <option value="front">In Front of Image</option>
+                  <option value="behind-image">Behind Hero Image</option>
+                </select>
+              </label>
+
+              <label class="field field--inline">
+                <span>Default Box Border</span>
+                <input id="editorial-info-border" type="checkbox" checked />
+              </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Secondary Text</h2>
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-add-secondary-block">+ Secondary</button>
+                <button type="button" class="button button--subtle" id="editorial-remove-secondary-block">− Secondary</button>
+                <button type="button" class="button button--subtle" id="editorial-toggle-secondary" data-editorial-section="secondary">▾ Toggle</button>
+              </div>
+              <div data-editorial-section-content="secondary">
+              <div class="editorial-block-list" id="editorial-secondary-block-list"></div>
+              <label class="field" hidden>
+                <span>Secondary Blocks</span>
+                <textarea id="editorial-secondary-text" rows="4" spellcheck="false"></textarea>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Secondary Size <output data-output="editorial-secondary-size"></output></span>
+                  <input id="editorial-secondary-size" type="range" min="14" max="72" step="1" value="26" />
+                </label>
+
+                <label class="field">
+                  <span>Secondary Opacity <output data-output="editorial-secondary-opacity"></output></span>
+                  <input id="editorial-secondary-opacity" type="range" min="0" max="1" step="0.01" value="0.86" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Secondary Tracking <output data-output="editorial-secondary-tracking"></output></span>
+                  <input id="editorial-secondary-tracking" type="range" min="-20" max="60" step="1" value="4" />
+                </label>
+
+                <label class="field">
+                  <span>Secondary Line Height <output data-output="editorial-secondary-line-height"></output></span>
+                  <input id="editorial-secondary-line-height" type="range" min="0.7" max="2" step="0.01" value="1" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Position X <output data-output="editorial-secondary-x"></output></span>
+                  <input id="editorial-secondary-x" type="range" min="-2.5" max="2.5" step="0.01" value="1.25" />
+                </label>
+
+                <label class="field">
+                  <span>Position Y <output data-output="editorial-secondary-y"></output></span>
+                  <input id="editorial-secondary-y" type="range" min="-2.5" max="2.5" step="0.01" value="-1.2" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Secondary Depth <output data-output="editorial-secondary-z"></output></span>
+                <input id="editorial-secondary-z" type="range" min="-2" max="2" step="0.01" value="0.46" />
+              </label>
+
+              <label class="field">
+                <span>Secondary Layer</span>
+                <select id="editorial-secondary-layer">
+                  <option value="front">In Front of Image</option>
+                  <option value="behind-image">Behind Hero Image</option>
+                </select>
+              </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Layout & Guides</h2>
+              <label class="field field--inline">
+                <span>Show Guides</span>
+                <input id="editorial-show-guides" type="checkbox" />
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Media Opacity <output data-output="editorial-media-opacity"></output></span>
+                  <input id="editorial-media-opacity" type="range" min="0" max="1" step="0.01" value="0.92" />
+                </label>
+
+                <label class="field">
+                  <span>Media Scale <output data-output="editorial-media-scale"></output></span>
+                  <input id="editorial-media-scale" type="range" min="0.5" max="2" step="0.01" value="1" />
+                </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Masks</h2>
+              <label class="field field--inline">
+                <span>Hero Mask</span>
+                <input id="editorial-hero-mask-enabled" type="checkbox" />
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Mask Type</span>
+                  <select id="editorial-hero-mask-type">
+                    <option value="rectangle">Rectangle</option>
+                    <option value="soft-rectangle">Soft Rectangle</option>
+                    <option value="vertical-crop">Vertical Crop</option>
+                    <option value="horizontal-crop">Horizontal Crop</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Mask Width <output data-output="editorial-hero-mask-width"></output></span>
+                  <input id="editorial-hero-mask-width" type="range" min="0.1" max="1.1" step="0.01" value="0.72" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Mask Height <output data-output="editorial-hero-mask-height"></output></span>
+                  <input id="editorial-hero-mask-height" type="range" min="0.08" max="1.1" step="0.01" value="0.38" />
+                </label>
+
+                <label class="field">
+                  <span>Mask X <output data-output="editorial-hero-mask-x"></output></span>
+                  <input id="editorial-hero-mask-x" type="range" min="-1" max="1" step="0.01" value="0" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Mask Y <output data-output="editorial-hero-mask-y"></output></span>
+                <input id="editorial-hero-mask-y" type="range" min="-1" max="1" step="0.01" value="0" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Optical</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Optical Size Bias <output data-output="editorial-optical-size-bias"></output></span>
+                  <input id="editorial-optical-size-bias" type="range" min="-1" max="1" step="0.01" value="0" />
+                </label>
+
+                <label class="field">
+                  <span>Hero Contrast <output data-output="editorial-hero-contrast"></output></span>
+                  <input id="editorial-hero-contrast" type="range" min="0.2" max="1.6" step="0.01" value="1" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Micro Contrast <output data-output="editorial-micro-contrast"></output></span>
+                  <input id="editorial-micro-contrast" type="range" min="0.2" max="1.6" step="0.01" value="1" />
+                </label>
+
+                <label class="field">
+                  <span>Whitespace Balance <output data-output="editorial-whitespace-balance"></output></span>
+                  <input id="editorial-whitespace-balance" type="range" min="0" max="1.5" step="0.01" value="0.7" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Text Density <output data-output="editorial-text-density"></output></span>
+                <input id="editorial-text-density" type="range" min="0.4" max="1.8" step="0.01" value="1" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Grid</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Grid Preset</span>
+                  <select id="editorial-grid-preset">
+                    <option value="2-column">2-Column</option>
+                    <option value="4-column">4-Column</option>
+                    <option value="asymmetrical">Asymmetrical Grid</option>
+                    <option value="poster">Poster Grid</option>
+                    <option value="fashion-spread">Fashion Spread</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Snap Strength <output data-output="editorial-grid-snap"></output></span>
+                  <input id="editorial-grid-snap" type="range" min="0" max="1" step="0.01" value="0" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Margins <output data-output="editorial-grid-margin"></output></span>
+                  <input id="editorial-grid-margin" type="range" min="0" max="1" step="0.01" value="0.14" />
+                </label>
+
+                <label class="field">
+                  <span>Gutter <output data-output="editorial-grid-gutter"></output></span>
+                  <input id="editorial-grid-gutter" type="range" min="0" max="0.4" step="0.01" value="0.08" />
+                </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Frame Logic</h2>
+              <label class="field">
+                <span>Image Relation</span>
+                <select id="editorial-frame-logic">
+                  <option value="under-hero">Under Hero</option>
+                  <option value="behind-hero">Behind Hero</option>
+                  <option value="inside-hero">Inside Hero</option>
+                  <option value="align-to-hero">Align to Hero</option>
+                </select>
+              </label>
+
+              <label class="field field--inline">
+                <span>Image Follow Hero</span>
+                <input id="editorial-image-follow-hero" type="checkbox" checked />
+              </label>
+
+              <label class="field">
+                <span>Image Scale Bias <output data-output="editorial-image-scale-bias"></output></span>
+                <input id="editorial-image-scale-bias" type="range" min="0.4" max="1.8" step="0.01" value="1" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Animation</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Preset</span>
+                  <select id="editorial-animation-preset">
+                    <option value="none">None</option>
+                    <option value="letter-drift">Letter Drift</option>
+                    <option value="kerning-bloom">Kerning Bloom</option>
+                    <option value="word-slide-fracture">Word Slide Fracture</option>
+                    <option value="mask-reveal">Mask Reveal</option>
+                    <option value="metadata-flicker">Metadata Flicker</option>
+                    <option value="staggered-serif">Staggered Serif Reveal</option>
+                    <option value="depth-push">Depth Text Push</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Speed <output data-output="editorial-animation-speed"></output></span>
+                  <input id="editorial-animation-speed" type="range" min="0" max="2" step="0.01" value="0.4" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Intensity <output data-output="editorial-animation-intensity"></output></span>
+                <input id="editorial-animation-intensity" type="range" min="0" max="1.5" step="0.01" value="0.35" />
+              </label>
+            </section>
+
+            <section class="group">
+              <h2>Fonts</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Metadata Font</span>
+                  <select id="editorial-metadata-font">
+                    <option value="Cormorant Garamond">Cormorant Garamond</option>
+                    <option value="IBM Plex Mono">IBM Plex Mono</option>
+                    <option value="Bodoni Moda">Bodoni Moda</option>
+                    <option value="Space Grotesk">Space Grotesk</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Labels Font</span>
+                  <select id="editorial-label-font">
+                    <option value="Space Grotesk">Space Grotesk</option>
+                    <option value="IBM Plex Mono">IBM Plex Mono</option>
+                    <option value="Cormorant Garamond">Cormorant Garamond</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Labels</h2>
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="editorial-add-label-block">+ Label</button>
+                <button type="button" class="button button--subtle" id="editorial-remove-label-block">− Label</button>
+                <button type="button" class="button button--subtle" id="editorial-toggle-labels" data-editorial-section="labels">▾ Toggle</button>
+              </div>
+              <div data-editorial-section-content="labels">
+              <div class="editorial-block-list" id="editorial-label-block-list"></div>
+              <label class="field" hidden>
+                <span>Label Blocks</span>
+                <textarea id="editorial-label-boxes" rows="4" spellcheck="false"></textarea>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Label Style</span>
+                  <select id="editorial-label-style">
+                    <option value="outline">Outline</option>
+                    <option value="fill">Fill</option>
+                    <option value="sticker">Sticker</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Label Size <output data-output="editorial-label-box-size"></output></span>
+                  <input id="editorial-label-box-size" type="range" min="12" max="72" step="1" value="24" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Label Tracking <output data-output="editorial-label-tracking"></output></span>
+                  <input id="editorial-label-tracking" type="range" min="-20" max="60" step="1" value="2" />
+                </label>
+
+                <label class="field">
+                  <span>Label Line Height <output data-output="editorial-label-line-height"></output></span>
+                  <input id="editorial-label-line-height" type="range" min="0.7" max="2" step="0.01" value="1" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Label Opacity <output data-output="editorial-label-box-opacity"></output></span>
+                <input id="editorial-label-box-opacity" type="range" min="0" max="1" step="0.01" value="1" />
+              </label>
+
+              <label class="field">
+                <span>Label Depth <output data-output="editorial-label-z"></output></span>
+                <input id="editorial-label-z" type="range" min="-2" max="2" step="0.01" value="0.28" />
+              </label>
+
+              <label class="field">
+                <span>Label Layer</span>
+                <select id="editorial-label-layer">
+                  <option value="front">In Front of Image</option>
+                  <option value="behind-image">Behind Hero Image</option>
+                </select>
+              </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Overlap</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Text Opacity <output data-output="editorial-overlap-text-opacity"></output></span>
+                  <input id="editorial-overlap-text-opacity" type="range" min="0" max="1" step="0.01" value="0.72" />
+                </label>
+
+                <label class="field">
+                  <span>Image Opacity <output data-output="editorial-overlap-image-opacity"></output></span>
+                  <input id="editorial-overlap-image-opacity" type="range" min="0" max="1" step="0.01" value="0.82" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Brightness Shift <output data-output="editorial-overlap-brightness"></output></span>
+                  <input id="editorial-overlap-brightness" type="range" min="-0.5" max="0.5" step="0.01" value="-0.1" />
+                </label>
+
+                <label class="field">
+                  <span>Priority <output data-output="editorial-overlap-priority"></output></span>
+                  <input id="editorial-overlap-priority" type="range" min="0" max="1" step="0.01" value="0.7" />
+                </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Text Styles</h2>
+              <div class="two-col">
+                <label class="field">
+                  <span>Hero Style</span>
+                  <select id="editorial-hero-style">
+                    <option value="fill">Fill Only</option>
+                    <option value="outline-only">Outline Only</option>
+                    <option value="fill-outline">Fill + Outline</option>
+                    <option value="shadow-duplicate">Shadow Duplicate</option>
+                    <option value="offset-duplicate">Offset Duplicate</option>
+                    <option value="inline">Inline</option>
+                    <option value="double-outline">Double Outline</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Text Style</span>
+                  <select id="editorial-text-style">
+                    <option value="fill">Fill Only</option>
+                    <option value="outline-only">Outline Only</option>
+                    <option value="fill-outline">Fill + Outline</option>
+                    <option value="shadow-duplicate">Shadow Duplicate</option>
+                    <option value="offset-duplicate">Offset Duplicate</option>
+                    <option value="inline">Inline</option>
+                    <option value="double-outline">Double Outline</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Outline Thickness <output data-output="editorial-outline-thickness"></output></span>
+                  <input id="editorial-outline-thickness" type="range" min="0" max="12" step="0.1" value="2" />
+                </label>
+
+                <label class="field">
+                  <span>Shadow Opacity <output data-output="editorial-shadow-opacity"></output></span>
+                  <input id="editorial-shadow-opacity" type="range" min="0" max="1" step="0.01" value="0.2" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Duplicate Offset X <output data-output="editorial-duplicate-offset-x"></output></span>
+                  <input id="editorial-duplicate-offset-x" type="range" min="-80" max="80" step="1" value="16" />
+                </label>
+
+                <label class="field">
+                  <span>Duplicate Offset Y <output data-output="editorial-duplicate-offset-y"></output></span>
+                  <input id="editorial-duplicate-offset-y" type="range" min="-80" max="80" step="1" value="10" />
+                </label>
+              </div>
+            </section>
+
+            <section class="group">
+              <h2>Brand Orbit Text</h2>
+              <label class="field">
+                <span>Orbit Text Objects</span>
+                <textarea id="editorial-brand-orbit-texts" rows="4" spellcheck="false"></textarea>
+              </label>
+
+              <button type="button" class="button button--subtle" id="editorial-push-brand-orbit">Push To Brand Orbit</button>
+            </section>
+
+            <section class="group">
+              <h2>Export</h2>
+              <div class="export-grid">
+                <button type="button" data-export="png">PNG</button>
+                <button type="button" data-export="jpg">JPG</button>
+                <button type="button" data-export="gif">GIF</button>
+                <button type="button" data-export="mp4">MP4</button>
+              </div>
+              <p class="status" id="editorial-export-status">Ready for PNG, JPG, GIF, or MP4 export.</p>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="cinematic">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Cinematic Mode</h2>
+              <p class="status">
+                Spatial media composition mode for GIF and video outputs. Activates only while this tab is open.
+              </p>
+
+              <label class="field">
+                <span>Layout</span>
+                <select id="cinematic-layout-preset">
+                  <option value="depth-field">Depth Field</option>
+                  <option value="tunnel">Tunnel / Corridor</option>
+                  <option value="media-walls">Media Walls</option>
+                  <option value="floating-cards">Layered Floating Cards</option>
+                </select>
+              </label>
+
+              <label class="field field--inline">
+                <span>Show Points</span>
+                <input id="cinematic-show-points" type="checkbox" />
+              </label>
+
+              <label class="field">
+                <span>Expansion Randomness <output data-output="cinematic-expansion-randomness"></output></span>
+                <input id="cinematic-expansion-randomness" type="range" min="0" max="1" step="0.01" value="0.35" />
+              </label>
+
+              <label class="field">
+                <span>Hover Proximity <output data-output="cinematic-hover-proximity-strength"></output></span>
+                <input id="cinematic-hover-proximity-strength" type="range" min="0" max="2" step="0.01" value="0.9" />
+              </label>
+
+              <label class="field">
+                <span>Depth Speed <output data-output="cinematic-depth-speed-tab"></output></span>
+                <input id="cinematic-depth-speed-tab" type="range" min="0" max="2" step="0.01" value="0.6" />
+              </label>
+
+              <label class="field">
+                <span>Direction</span>
+                <select id="cinematic-direction-tab">
+                  <option value="forward">Forward</option>
+                  <option value="backward">Backward</option>
+                </select>
+              </label>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Background Color</span>
+                  <input id="cinematic-background-color" type="color" value="#050505" />
+                </label>
+
+                <label class="field field--inline">
+                  <span>Transparent Background</span>
+                  <input id="cinematic-transparent-background" type="checkbox" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Format Ratio</span>
+                  <select id="cinematic-export-ratio">
+                    <option value="current">Current</option>
+                    <option value="1:1">1:1</option>
+                    <option value="4:5">4:5</option>
+                    <option value="16:9">16:9</option>
+                    <option value="9:16">9:16</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Base Size</span>
+                  <select id="cinematic-export-size">
+                    <option value="1080" selected>1080</option>
+                    <option value="1350">1350</option>
+                    <option value="1920">1920</option>
+                    <option value="2048">2048</option>
+                    <option value="3840">3840 (4K)</option>
+                    <option value="7680">7680 (8K)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Frames <output data-output="cinematic-export-frames"></output></span>
+                  <input id="cinematic-export-frames" type="range" min="12" max="180" step="1" value="48" />
+                </label>
+
+                <label class="field">
+                  <span>Duration <output data-output="cinematic-export-duration"></output></span>
+                  <input id="cinematic-export-duration" type="range" min="1" max="12" step="0.5" value="4" />
+                </label>
+              </div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Quality <output data-output="cinematic-export-quality"></output></span>
+                  <input id="cinematic-export-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" />
+                </label>
+
+                <label class="field">
+                  <span>FPS <output data-output="cinematic-export-fps"></output></span>
+                  <input id="cinematic-export-fps" type="range" min="8" max="60" step="1" value="24" />
+                </label>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" class="button button--subtle" id="cinematic-save-preset">Save as Preset</button>
+                <button type="button" data-export="png">PNG</button>
+                <button type="button" data-export="gif">GIF</button>
+                <button type="button" data-export="mp4">MP4</button>
+              </div>
+              <p class="status" id="cinematic-status">Ready for PNG, GIF, or MP4 export.</p>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="animation">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Animation Timeline</h2>
+              <p class="status" id="animation-status">
+                Set the playhead, move the preview camera, then save keyframes. Playback interpolates the recorded view like a lightweight editorial motion tool.
+              </p>
+
+              <label class="field">
+                <span>Duration <output data-output="animation-duration"></output></span>
+                <input id="animation-duration" type="range" min="1" max="12" step="0.1" value="5" />
+              </label>
+
+              <label class="field">
+                <span>Timeline <output data-output="animation-current-time"></output></span>
+                <input id="animation-current-time" type="range" min="0" max="5" step="0.01" value="0" />
+              </label>
+
+              <label class="field field--inline">
+                <span>Loop Playback</span>
+                <input id="animation-loop" type="checkbox" checked />
+              </label>
+
+              <label class="field field--inline">
+                <span>Auto Key</span>
+                <input id="animation-auto-key" type="checkbox" />
+              </label>
+
+              <label class="field">
+                <span>Easing</span>
+                <select id="animation-easing">
+                  <option value="linear">Linear</option>
+                  <option value="ease-in">Ease In</option>
+                  <option value="ease-out">Ease Out</option>
+                  <option value="ease-in-out" selected>Ease In Out</option>
+                  <option value="smooth">Smooth</option>
+                  <option value="cinematic">Cinematic</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Flight Speed Curve</span>
+                <select id="animation-flight-profile">
+                  <option value="even">Even</option>
+                  <option value="gentle">Gentle</option>
+                  <option value="slow-fast" selected>Slow → Fast</option>
+                  <option value="fast-slow">Fast → Slow</option>
+                  <option value="dramatic">Dramatic</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Flight Intensity <output data-output="animation-flight-intensity"></output></span>
+                <input id="animation-flight-intensity" type="range" min="0" max="1" step="0.01" value="0.65" />
+              </label>
+
+              <div class="export-grid">
+                <button type="button" id="animation-prev-keyframe">Prev Key</button>
+                <button type="button" id="animation-next-keyframe">Next Key</button>
+                <button type="button" id="animation-save-current-view">Save Current View</button>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" id="animation-add-keyframe">Add Keyframe</button>
+                <button type="button" id="animation-update-keyframe">Update Keyframe</button>
+                <button type="button" id="animation-delete-keyframe">Delete Keyframe</button>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" id="animation-play-toggle">Play</button>
+                <button type="button" id="animation-stop">Stop</button>
+                <button type="button" id="animation-save-preset">Save as Preset</button>
+              </div>
+
+              <button type="button" class="button button--subtle" id="animation-advanced-toggle">
+                ▸ Advanced Tracks
+              </button>
+
+              <div id="animation-advanced-content" hidden>
+                <p class="status" id="animation-source-mode-status">
+                  Source mode: System. Expand this only if you want the keyframes to remember composition changes in addition to the camera.
+                </p>
+
+                <label class="field field--inline">
+                  <span>Record Composition State</span>
+                  <input id="animation-capture-composition" type="checkbox" />
+                </label>
+              </div>
+
+              <div class="group" style="margin-top: 12px;">
+                <h2>Tracks</h2>
+                <div id="animation-track-list" class="saved-list"></div>
+              </div>
+
+              <div class="saved-list" id="animation-keyframe-list"></div>
+
+              <div class="two-col">
+                <label class="field">
+                  <span>Quality <output data-output="animation-export-quality"></output></span>
+                  <input id="animation-export-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" />
+                </label>
+
+                <label class="field">
+                  <span>FPS <output data-output="animation-export-fps"></output></span>
+                  <input id="animation-export-fps" type="range" min="8" max="60" step="1" value="24" />
+                </label>
+              </div>
+
+              <div class="export-grid">
+                <button type="button" data-export="gif">GIF</button>
+                <button type="button" data-export="mp4">MP4</button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="panel-pane" data-panel-pane="presets">
+          <div class="panel__stack">
+            <section class="group">
+              <h2>Preset Library</h2>
+              <p class="status" id="presets-status">
+                Built-in layout starters and your own saved presets. Load one, then continue editing it inside System, Brand, Editorial, Cinematic, or Animation.
+              </p>
+
+              <label class="field">
+                <span>Category</span>
+                <select id="preset-category-filter">
+                  <option value="all">All</option>
+                  <option value="telegram-posts">Telegram Posts</option>
+                  <option value="stories">Stories</option>
+                  <option value="posters">Posters</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+
+              <div class="saved-list" id="preset-library-list"></div>
+            </section>
+          </div>
+        </div>
+      </aside>
+
+      <main class="stage-shell">
+        <div class="stage-meta">
+          <p>Drag to orbit</p>
+          <p>Scroll to zoom</p>
+          <p>Single object first, then switch to grid mode</p>
+        </div>
+        <div class="stage" id="stage">
+          <canvas id="scene-canvas" aria-label="3D typography stage"></canvas>
+        </div>
+        <div class="stage-actions">
+          <button type="button" id="randomize-composition-button">Random</button>
+          <button type="button" id="invert-composition-button">Invert</button>
+          <button type="button" id="auto-motion-toggle">Pause Motion</button>
+          <button type="button" id="reset-all-button">Reset All</button>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal-overlay" id="preset-modal" hidden>
+      <div class="modal-card">
+        <h2>Save Preset</h2>
+        <p class="status" id="preset-modal-status">Save the current composition into the preset library.</p>
+
+        <label class="field">
+          <span>Preset Name</span>
+          <input id="preset-modal-name" type="text" value="New Preset" />
+        </label>
+
+        <label class="field">
+          <span>Category</span>
+          <select id="preset-modal-category">
+            <option value="telegram-posts">Telegram Posts</option>
+            <option value="stories">Stories</option>
+            <option value="posters">Posters</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Source Mode</span>
+          <select id="preset-modal-source-tab">
+            <option value="system">System</option>
+            <option value="brand">Brand</option>
+            <option value="editorial">Editorial</option>
+            <option value="cinematic">Cinematic</option>
+            <option value="animation">Animation</option>
+          </select>
+        </label>
+
+        <div class="export-grid">
+          <button type="button" id="preset-modal-confirm">Save</button>
+          <button type="button" id="preset-modal-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js?v=hand-mp4-finalize-fix1"></script>
+  </body>
+</html>
